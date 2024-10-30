@@ -1,0 +1,234 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+} 
+
+model User {
+  id        String   @id @default(cuid()) 
+  username       String @db.Text  
+  email   String @db.Text @unique 
+  password  String? @db.Text  
+  mobileNumber String? 
+  adress  adress[] 
+  cart cart[]
+  fav fav[]  
+  order order[]
+  location Location[]   
+  review Review[]
+  payment payment[]   
+  countryCode String?
+  createdAt  DateTime @default(now()) 
+  updatedAt  DateTime @updatedAt
+}
+enum type {
+  Home  
+  Office
+}
+model adress{
+  id String @id @default(cuid())   
+   name String @db.Text  
+   adressline String @db.Text 
+  mobilenumber String @db.Text 
+  type type
+  city String @db.Text 
+  state String @db.Text  
+  postalCode String @db.Text
+  userId String @db.Text 
+  user User @relation(fields: [userId], references: [id], onDelete:Cascade) 
+   createdAt  DateTime @default(now()) 
+  updatedAt  DateTime @updatedAt 
+  
+} 
+
+model Product{ 
+  id String @id @default(cuid())    
+  name String @db.Text  
+  details String @db.Text 
+  unit_name String @db.Text 
+  unit_value String @db.Text  
+  Image String[]    
+  sellerId String @db.Text
+  admin admin @relation(fields: [sellerId], references: [id], onDelete:Cascade) 
+  nutritionweight String? 
+  category String @db.Text
+  price Float @db.DoublePrecision()  
+  review Review[] 
+  product Offer[]
+  cart cart[] 
+  fav fav[] 
+
+  order orderProduct[]
+  nutriion  nutrition[]
+  createdAt  DateTime @default(now()) 
+  updatedAt  DateTime @updatedAt
+  
+}  
+model  fav{
+  id String @id @default(cuid())  
+  productId String @db.Text 
+  product Product @relation(fields: [productId], references: [id], onDelete:Cascade)    
+  userId String @db.Text
+  user User @relation(fields: [userId], references: [id], onDelete:Cascade)   
+  status Boolean  
+   createdAt  DateTime @default(now()) 
+  updatedAt  DateTime @updatedAt
+  
+  
+  
+}
+
+model Offer{ 
+   id String @id @default(cuid())     
+   productId String @db.Text 
+   product  Product @relation(fields: [productId], references: [id], onDelete:Cascade)  
+   price Float @db.DoublePrecision()     
+   start_date DateTime 
+   seller_id  String @db.Text  
+   end_date DateTime 
+   createdAt  DateTime @default(now()) 
+   updatedAt  DateTime @updatedAt
+
+} 
+
+model cart{
+  id String @id @default(cuid()) 
+   userId String @db.Text 
+   user User @relation(fields: [userId], references: [id], onDelete:Cascade)  
+   prod_id String @db.Text  
+   product Product @relation(fields: [prod_id], references: [id], onDelete:Cascade)  
+   qty Int  
+   price Float @db.DoublePrecision() 
+   createdAt  DateTime @default(now()) 
+   updatedAt  DateTime @updatedAt
+} 
+model Location{
+   id String @id @default(cuid())   
+   
+  city String @db.Text 
+  state String @db.Text   
+   userId String @db.Text 
+  user User @relation(fields: [userId], references: [id], onDelete:Cascade)  
+  createdAt  DateTime @default(now()) 
+  updatedAt  DateTime @updatedAt
+
+} 
+
+model payment{
+  id String @id @default(cuid())  
+  name String @db.Text 
+  cardno String @db.Text  
+  month String @db.Text  
+  year String @db.Text   
+  userId String @db.Text  
+  user User @relation(fields: [userId], references: [id], onDelete:Cascade)   
+  createdAt  DateTime @default(now()) 
+  updatedAt  DateTime @updatedAt
+  
+} 
+
+enum paymentstatus {
+  waiting 
+  done  
+  fail  
+  refund
+}
+enum orderstatus {
+  pending  
+  delivered  
+  cancelled  
+  refund  
+  return  
+  Accepted   
+  rejected
+  
+}
+enum deliverytype {
+  collection  
+  Delivery
+
+}
+
+model order{
+  id String @id @default(cuid()) 
+  userId String @db.Text 
+  user User @relation(fields: [userId], references: [id], onDelete:Cascade)  
+  total_price Float @db.DoublePrecision() 
+  delivery_type deliverytype
+  user_pay_price Float @db.DoublePrecision() 
+  delivery_price Float @db.DoublePrecision()  
+  payment_type String @db.Text
+  payment_status paymentstatus @default(waiting)  
+  order_status orderstatus @default(pending)  
+  address_id  String? @db.Text   
+  discountPrice Float @db.DoublePrecision()
+  sellerId String @db.Text @default("cm0ypzix40000tts3gbmj2vzo") 
+  createdAt  DateTime @default(now())   
+  updatedAt  DateTime @updatedAt  
+  products orderProduct[]
+}
+model orderProduct{
+  id String @id @default(cuid())   
+  qty Int  
+  product_id String  
+  order_id String  
+  order order @relation(fields: [order_id], references: [id], onDelete:Cascade )    
+  product Product @relation(fields: [product_id],references: [id],onDelete:Cascade )
+}
+model Review{
+   id String @id @default(cuid())  
+   rating  Decimal   
+   comment String @db.Text 
+   userId String @db.Text 
+   user User @relation(fields: [userId], references: [id], onDelete:Cascade)       
+   productId String @db.Text 
+   product Product @relation(fields: [productId], references: [id], onDelete:Cascade)  
+    createdAt  DateTime @default(now())
+
+
+}  
+model admin{
+  id String @id @default(cuid())   
+   username String @db.Text   
+   email String @db.Text @unique     
+   password String @db.Text   
+   createdAt  DateTime @default(now())  
+   updatedAt  DateTime @updatedAt 
+   product Product[]
+  
+}
+model nutrition{
+  id String @id @default(cuid())   
+  nutrionName String @db.Text  
+  nutritionValue String @db.Text   
+  productId String @db.Text 
+  product Product @relation(fields: [productId], references: [id], onDelete:Cascade)
+  
+}
+  
+model promo{
+  id String @id @default(cuid()) 
+  PromoCode String @db.Text 
+  Title String @db.Text  
+  Description String  @db.Text  
+  start_date DateTime @default(now())   
+  end_date DateTime @default(now())    
+  type String    
+  Offerprice Float  
+  min_order_price Float  
+  Max_Discount_amount Float    
+  userId String @db.Text  
+
+
+}
+
+
