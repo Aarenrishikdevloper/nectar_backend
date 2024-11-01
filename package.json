@@ -5,11 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon index.js", 
-<<<<<<< HEAD
-     "postinstall": "npx prisma generate"
-=======
+
     "postinstall": "npx prisma generate"
->>>>>>> 621bac24ab0013054e29b082b51c665c0a7e40f6
+
   },
   "author": "\"nectar\"",
   "license": "ISC",
