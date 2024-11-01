@@ -4,7 +4,8 @@
   "description": "\"backend for grocery app\"",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js", 
+     "postinstall": "npx prisma generate"
   },
   "author": "\"nectar\"",
   "license": "ISC",

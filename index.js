@@ -6,11 +6,11 @@ const sseAdminController = require('./controllers/admin_sse');
 const adminroute = require('./controllers/admin_controller');
 
 const { type } = require('@prisma/client');
-
+const path = require('path');
 const port = 3000;
 require('dotenv').config();
 app.use(express.json());
-
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/user',userRouter); 
 app.use('/api/admin', adminroute); 
 app.get('/api/sseadmin', sseAdminController.sseAdmin);

@@ -4,26 +4,23 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
 const router = express.Router(); 
 const db = new PrismaClient();    
-const ssecontroller = require('./admin_sse');
-const admin = require('firebase-admin/app');  
-const { getStorage } = require('firebase-admin/storage');
-const { initializeApp, cert } = require('firebase-admin/app');
+
 const fs = require('fs');  
 
 const path = require('path');  
 const multer = require('multer');  
-const serviceaccount  = require('../utils/firebase_service_account.json'); 
+const storage = multer.diskStorage({
+  destination:(req, files, cb)=>{
+    cb(null, 'uploads/');
+  }, 
+  filename:(req, file, cb)=>{ 
+    cb(null , Date.now() + path.extname(file.originalname));
 
-
-initializeApp({
-    credential:cert(serviceaccount), 
-    storageBucket:'gs://groceryapp-970ff.appspot.com'
-
-    
-}) 
-const bucket = getStorage().bucket(); 
-const storage = multer.memoryStorage(); 
+  }
+})
 const upload = multer({storage:storage});
+
+
 router.post('/register', async(req, res)=>{
     const {username, email, password} = req.body;  
     try{
@@ -85,36 +82,11 @@ router.post('/product',upload.array('images', 10), async(req, res)=>{
       const files = req.files;   
       const converprice  = parseFloat(price); 
       if(!files || files.length ===0) return res.status(400).json({message:"Image is required"});  
-      const imageUrls =[]; 
-      for(const file of files){
-        const filename = Date.now() + "_" + file.originalname;    
-        const fileUpload = bucket.file(filename); 
-
-        const blobstream = fileUpload.createWriteStream({
-            metadata:{
-                contentType:file.mimetype,
-            }
-          })   
-        await new Promise((resolve, reject) =>{
-            blobstream.on('error', (err) => {
-                console.log("Error uploading file: " + err);
-                reject( res.status(500).json({message:"Error uploading file"}));
-              }) 
-            blobstream.on('finish', async()=>{
-                const[url] = await fileUpload.getSignedUrl({
-                    action:"read", 
-                    expires: "03-01-3500"
-                }) 
-                imageUrls.push(url); 
-                resolve();
-            }); 
-            blobstream.end(file.buffer);  
-           
-;
-        }) 
-      }
-      
-      
+      const imageUrls =[];
+      files.forEach(file => {
+        const url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`; // Construct URL for the uploaded image
+        imageUrls.push(url);
+      });
     
      
       console.log(converprice)
@@ -191,7 +163,7 @@ router.delete('/products', async(req, res)=>{
         id:prod_Id
       }
      }) 
-     senddeleteEvent(prod_Id);
+     //senddeleteEvent(prod_Id);
      return res.status(200).json({message:"Product deleted successfully"});
   }catch(err){
     console.log("Product Creation api error: " + err); 
@@ -250,7 +222,7 @@ router.put('/product',upload.array('images', 10), async(req, res)=>{
     const {name, price, details, category, unitname, unitvalue, nutrition, userId, nutritionweight,existimgImageUrls } = req.body;  
     console.log(price);  
     let parsednutrition; 
-    let parsedExistingImageUrls = existimgImageUrls?JSON.parse(existimgImageUrls):[];
+    
 
     if(typeof  nutrition === 'string'){
       parsednutrition =JSON.parse(nutrition);
@@ -260,37 +232,16 @@ router.put('/product',upload.array('images', 10), async(req, res)=>{
     console.log(parsednutrition);
     const files = req.files;   
     const converprice  = parseFloat(price); 
-    
-    const imageUrls =[...parsedExistingImageUrls]; 
+    const imageurls = existimgImageUrls?JSON.parse(existimgImageUrls):[];  
     if(files && files.length > 0){
-    for(const file of files){
-      const filename = Date.now() + "_" + file.originalname;    
-      const fileUpload = bucket.file(filename); 
-
-      const blobstream = fileUpload.createWriteStream({
-          metadata:{
-              contentType:file.mimetype,
-          }
-        })   
-      await new Promise((resolve, reject) =>{
-          blobstream.on('error', (err) => {
-              console.log("Error uploading file: " + err);
-              reject( res.status(500).json({message:"Error uploading file"}));
-            }) 
-          blobstream.on('finish', async()=>{
-              const[url] = await fileUpload.getSignedUrl({
-                  action:"read", 
-                  expires: "03-01-3500"
-              }) 
-              imageUrls.push(url); 
-              resolve();
-          }); 
-          blobstream.end(file.buffer);  
-         
-;
-      }) 
+      files.forEach(file =>{
+         const url = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`
+        imageurls.push(url);
+      })
     }
-  }
+
+   
+   
     
   
    
@@ -316,7 +267,7 @@ router.put('/product',upload.array('images', 10), async(req, res)=>{
               category:category, 
               unit_name:unitname, 
               unit_value:unitvalue,  
-              Image:imageUrls, 
+              Image:imageurls, 
              
               
 
